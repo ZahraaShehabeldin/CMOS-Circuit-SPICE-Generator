@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <stack>
 #include <set>
@@ -58,7 +57,7 @@ R findR(string Rname)
 	return r;
 }
 R AND(string one, string two)
-{	
+{
 	R current;
 	R current2;
 	R returnstruct;
@@ -101,7 +100,6 @@ R AND(string one, string two)
 		wirecount++;
 		counter++;
 		return returnstruct;
-
 	}
 
 	else if (one[0] == 'r' && two[0] != 'r')
@@ -111,14 +109,7 @@ R AND(string one, string two)
 			two += "Not";
 		else
 			two = two[0];
-		for (int i = 0; i < 100; i++)
-		{
-			if (rr[i].name == one)
-			{
-				current = rr[i];
-				i = 100;
-			}
-		}
+		current = findR(one);
 		cmos[counter].Mname = "M";
 		cmos[counter].Mname += to_string(1 + counter);
 		cmos[counter].S = current.tail;
@@ -137,21 +128,13 @@ R AND(string one, string two)
 		rCounter++;
 		return returnstruct;
 	}
-
 	else if (one[0] != 'r' && two[0] == 'r')
 	{
 		if (one.length() == 1)
 			one += "Not";
 		else
 			one = one[0];
-		for (int i = 0; i < 100; i++)
-		{
-			if (rr[i].name == two)
-			{
-				current = rr[i];
-				i = 100;
-			}
-		}
+		current = findR(two);
 		// !r
 		cmos[counter].Mname = "M";
 		cmos[counter].Mname += to_string(1 + counter);
@@ -166,6 +149,7 @@ R AND(string one, string two)
 
 		replaceWires(cmos[counter].D, current.head);
 		returnstruct.tail = current.tail;
+		returnstruct.head = cmos[counter].S;
 		returnstruct.name = "r";
 		returnstruct.name += to_string(rCounter);
 		rr[rCounter] = returnstruct;
@@ -177,24 +161,10 @@ R AND(string one, string two)
 	}
 	else if (one[0] == 'r' && two[0] == 'r')
 	{
-		for (int i = 0; i < 100; i++)
-		{
-			if (rr[i].name == one)
-			{
-				current = rr[i];
-				i = 100;
-			}
-		}
-		for (int i = 0; i < 100; i++)
-		{
-			if (rr[i].name == two)
-			{
-				current2 = rr[i];
-				i = 100;
-			}
-		}
+		current = findR(one);
+		current2 = findR(two);
 		returnstruct.head = current.head;
-		returnstruct.tail = current.tail;
+		returnstruct.tail = current2.tail;
 		returnstruct.name = "r";
 		returnstruct.name += to_string(rCounter);
 		replaceWires(current.tail, current2.head);
@@ -364,13 +334,22 @@ label:
 	else if (exp1[i] == '(') {
 
 		finalExpCurrent += '(';
-		int ii = i + 1;
-		while (exp1[ii] != ')')
-			ii++;
-		finalExpCurrent += bracketNots(i + 1);
-		i = ii + 1;
-		if(exp1[i]=='`')
 		i++;
+		stack<char> s3;
+		s3.push('(');
+		int ii = i;
+		while (!s3.empty())
+		{
+			if (exp1[ii] == ')')
+				s3.pop();
+			else if (exp1[ii] == '(')
+				s3.push('(');
+			ii++;
+		}
+		finalExpCurrent += bracketNots(i);
+		i = ii;
+		if (exp1[i] == '`')
+			i++;
 		goto label;
 	}
 	else
@@ -399,10 +378,7 @@ string removeNots(string exp)
 			returnstr += exp[i];
 			returnstr += '`';
 		}
-		else if (exp[i] == ')' && exp[i+1]!='\0')
-		{
-			returnstr += ")";
-		}
+
 		else if (exp[i] == '+')
 		{
 			returnstr += '&';
@@ -445,7 +421,7 @@ string remover()
 			for (int index = 0; index < first; index++)
 				finalExp += exp1[index];
 			finalExp += '(';
-			finalExp += bracketNots(first+1);
+			finalExp += bracketNots(first + 1);
 			exp1 = exp1.substr(finder, exp1.length() - finder);
 		}
 		finalExp += exp1;
@@ -499,7 +475,7 @@ string priority(string exp)
 			string letter;
 			if (!s1.empty())
 				letter = s1.top();
-			while (!s1.empty()&& letter != "(")
+			while (!s1.empty() && letter != "(")
 			{
 				a += letter;
 				s1.pop();
@@ -619,8 +595,7 @@ void print()
 			<< cmos[i].B << " " << cmos[i].Type << "\n";
 	}
 }
-int 
-main()
+int main()
 {
 	string finall;
 	cin >> exp1;
@@ -630,10 +605,10 @@ main()
 	exp1 = finall;
 	//while (finall.find(")`") != string::npos)
 	//{
-	//	exp1 = finall;
-	//	finall = remover();
+	//  exp1 = finall;
+	//  finall = remover();
 	//}
-	string lastR=PUN(priority(finall));
+	string lastR = PUN(priority(finall));
 	replaceWires("VDD", findR(lastR).head);
 	replaceWires("Y", findR(lastR).tail);
 	print();
